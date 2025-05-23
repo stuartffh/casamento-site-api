@@ -43,17 +43,9 @@ ENV PORT=3001 \
     DATABASE_URL="file:/app/database/database.sqlite" \
     NODE_ENV="production"
 
-# Criar script de inicialização diretamente no estágio de produção
-RUN echo '#!/bin/sh\n\
-echo "Executando migrations do Prisma..."\n\
-npx prisma migrate deploy\n\
-echo "Iniciando o servidor..."\n\
-npm start\n\
-' > /app/start.sh && \
-chmod +x /app/start.sh
-
 USER node
 
 EXPOSE 3001
 
-CMD ["/bin/sh", "/app/start.sh"]
+# Executar migrations e iniciar o servidor diretamente no CMD
+CMD npx prisma migrate deploy && npm start
