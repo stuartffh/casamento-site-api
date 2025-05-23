@@ -4,12 +4,13 @@ Este documento explica como implantar o backend do site de casamento no EasyPane
 
 ## Sobre o Dockerfile
 
-O Dockerfile melhorado para o backend está configurado para:
+O Dockerfile corrigido para o backend está configurado para:
 
 1. Construir a aplicação Node.js com todas as dependências necessárias
 2. Configurar o Prisma ORM para acesso ao banco de dados SQLite
 3. Executar migrations automaticamente na inicialização
 4. Garantir permissões adequadas e segurança
+5. **Usar caminhos absolutos** para o banco de dados SQLite
 
 ## Passos para Implantação no EasyPanel
 
@@ -33,28 +34,29 @@ Configure o serviço com as seguintes informações:
 - **Método de Implantação**: Git
 - **Repositório Git**: https://github.com/hosanah/casamento-site-api.git
 - **Branch**: main (ou a branch que deseja implantar)
-- **Dockerfile Path**: ./Dockerfile (ou ./Dockerfile.improved se você renomeou o arquivo)
+- **Dockerfile Path**: ./Dockerfile.fixed (importante usar o arquivo corrigido)
 - **Porta Exposta**: 3001 (já configurada no Dockerfile)
 
 ### 4. Variáveis de Ambiente
 
 Configure as seguintes variáveis de ambiente:
 
-- `DATABASE_URL`: Por padrão, usa SQLite local em "file:../database/database.sqlite". Para usar outro banco:
-  - MySQL: `mysql://USER:PASSWORD@HOST:PORT/DATABASE`
-  - PostgreSQL: `postgresql://USER:PASSWORD@HOST:PORT/DATABASE`
+- `DATABASE_URL`: Já definido como "file:/app/database/database.sqlite" no Dockerfile
+  - Para usar outro banco:
+    - MySQL: `mysql://USER:PASSWORD@HOST:PORT/DATABASE`
+    - PostgreSQL: `postgresql://USER:PASSWORD@HOST:PORT/DATABASE`
 - `JWT_SECRET`: Chave secreta para geração de tokens JWT (use uma string aleatória e segura)
 - `PORT`: 3001 (já definido no Dockerfile, altere apenas se necessário)
 - `NODE_ENV`: "production" (já definido no Dockerfile)
 
-### 5. Volumes Persistentes (Importante)
+### 5. Volumes Persistentes (CRÍTICO)
 
-Configure um volume persistente para o diretório do banco de dados:
+**IMPORTANTE**: Configure um volume persistente para o diretório do banco de dados:
 
 - **Caminho no Container**: /app/database
 - **Descrição**: Banco de dados SQLite
 
-Isso garantirá que seus dados sejam preservados mesmo se o container for reiniciado.
+Isso é **absolutamente essencial** para que seus dados sejam preservados. Sem este volume, todos os dados serão perdidos quando o container for reiniciado.
 
 ### 6. Recursos (Recomendado)
 
@@ -71,7 +73,7 @@ Recomendações de recursos para o serviço:
 
 ## Migrations do Banco de Dados
 
-O Dockerfile melhorado executa automaticamente as migrations do Prisma na inicialização do container. Isso garante que o esquema do banco de dados esteja sempre atualizado.
+O Dockerfile corrigido executa automaticamente as migrations do Prisma na inicialização do container. Isso garante que o esquema do banco de dados esteja sempre atualizado.
 
 Se você precisar executar migrations manualmente:
 
@@ -91,10 +93,10 @@ Para atualizar o backend após alterações no código:
 
 Se encontrar problemas durante a implantação:
 
-1. Verifique os logs de build e execução no EasyPanel
-2. Certifique-se de que todas as variáveis de ambiente necessárias estão configuradas
-3. Verifique se o volume persistente para o banco de dados está configurado corretamente
-4. Se necessário, acesse o terminal do container para depuração
+1. **Problema com o banco de dados**: Verifique se o volume persistente para `/app/database` está configurado corretamente
+2. **Erro de permissão**: Verifique se o usuário `node` tem permissões de escrita no diretório do banco de dados
+3. **Migrations falhando**: Acesse o terminal do container e execute `npx prisma migrate deploy` manualmente para ver erros detalhados
+4. **Container encerrando**: Verifique os logs para identificar possíveis erros de inicialização
 
 ## Notas Adicionais
 
@@ -102,3 +104,4 @@ Se encontrar problemas durante a implantação:
 - Para sites com alto tráfego, considere configurar um banco de dados externo (MySQL/PostgreSQL)
 - O Dockerfile está configurado para executar como usuário não-root (node) por segurança
 - As migrations são executadas automaticamente na inicialização do container
+- O caminho do banco de dados SQLite agora é absoluto (/app/database/database.sqlite) para evitar problemas de path no Docker

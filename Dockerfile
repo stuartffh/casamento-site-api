@@ -40,10 +40,10 @@ RUN mkdir -p ./database && \
 
 # Definir variáveis de ambiente padrão
 ENV PORT=3001 \
-    DATABASE_URL="file:../database/database.sqlite" \
+    DATABASE_URL="file:/app/database/database.sqlite" \
     NODE_ENV="production"
 
-# Criar script de inicialização que executa migrations e inicia o servidor
+# Criar script de inicialização diretamente no estágio de produção
 RUN echo '#!/bin/sh\n\
 echo "Executando migrations do Prisma..."\n\
 npx prisma migrate deploy\n\
@@ -56,4 +56,4 @@ USER node
 
 EXPOSE 3001
 
-CMD ["/app/start.sh"]
+CMD ["/bin/sh", "/app/start.sh"]
