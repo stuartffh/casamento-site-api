@@ -32,15 +32,28 @@ COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package*.json ./
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/src ./src
-COPY --from=builder /app/.env ./
 
 # Criar diretório para o banco de dados
 RUN mkdir -p ./database && \
     chown -R node:node /app && \
     chmod -R 755 /app
 
+# Definir variáveis de ambiente padrão
+ENV PORT=3001 \
+    DATABASE_URL="file:../database/database.sqlite" \
+    NODE_ENV="production"
+
+# Criar script de inicialização que executa migrations e inicia o servidor
+RUN echo '#!/bin/sh\n\
+echo "Executando migrations do Prisma..."\n\
+npx prisma migrate deploy\n\
+echo "Iniciando o servidor..."\n\
+npm start\n\
+' > /app/start.sh && \
+chmod +x /app/start.sh
+
 USER node
 
 EXPOSE 3001
 
-CMD ["npm", "start"]
+CMD ["/app/start.sh"]
