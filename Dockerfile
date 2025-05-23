@@ -1,9 +1,12 @@
 # Estágio de construção
 FROM node:20-alpine AS builder
 
+# Instala dependências do sistema necessárias para o Prisma
+RUN apk add --no-cache openssl1.1-compat
+
 WORKDIR /app
 
-# Copiar apenas os arquivos necessários para instalação
+# Copiar arquivos de configuração
 COPY server/package*.json ./
 COPY server/prisma ./prisma/
 
@@ -19,6 +22,9 @@ RUN npx prisma generate
 # Estágio de produção
 FROM node:20-alpine
 
+# Instala dependências do sistema necessárias para o Prisma
+RUN apk add --no-cache openssl1.1-compat
+
 WORKDIR /app
 
 # Copiar o necessário do estágio builder
@@ -29,10 +35,8 @@ COPY --from=builder /app/src ./src
 COPY --from=builder /app/.env ./
 
 # Criar diretório para o banco de dados
-RUN mkdir -p ./database
-
-# Ajustar permissões para o SQLite
-RUN chown -R node:node /app && \
+RUN mkdir -p ./database && \
+    chown -R node:node /app && \
     chmod -R 755 /app
 
 USER node

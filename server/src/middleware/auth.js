@@ -1,4 +1,5 @@
 const jwt = require('jsonwebtoken');
+const tokenJwt = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImlhdCI6MTUxNjIzOTAyMn0.KMUFsIDTnFmyG3nMiGM6H9FNFUROf3wh7SmqJp-QV30';
 
 const authenticateJWT = (req, res, next) => {
   const authHeader = req.headers.authorization;
@@ -6,7 +7,7 @@ const authenticateJWT = (req, res, next) => {
   if (authHeader) {
     const token = authHeader.split(' ')[1];
 
-    jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+    jwt.verify(token, tokenJwt, (err, user) => {
       if (err) {
         return res.status(403).json({ message: 'Token inválido ou expirado' });
       }
