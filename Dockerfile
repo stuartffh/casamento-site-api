@@ -1,9 +1,6 @@
 # Estágio de construção
 FROM node:20-alpine AS builder
 
-# Instala dependências do sistema necessárias para o Prisma
-RUN apk add --no-cache openssl1.1-compat
-
 WORKDIR /app
 
 # Copiar arquivos de configuração
