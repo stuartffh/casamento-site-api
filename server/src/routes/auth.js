@@ -6,6 +6,8 @@ const { PrismaClient } = require('@prisma/client');
 const router = express.Router();
 const prisma = new PrismaClient();
 
+const secretKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImlhdCI6MTUxNjIzOTAyMn0.KMUFsIDTnFmyG3nMiGM6H9FNFUROf3wh7SmqJp-QV30';
+
 // Rota de login
 router.post('/login', async (req, res) => {
   try {
@@ -29,7 +31,7 @@ router.post('/login', async (req, res) => {
     // Gerar token JWT
     const token = jwt.sign(
       { id: user.id, email: user.email, name: user.name },
-      tokenJwt,
+      secretKey,
       { expiresIn: '24h' }
     );
 
