@@ -22,9 +22,6 @@ RUN npx prisma generate
 # Estágio de produção
 FROM node:20-alpine
 
-# Instala dependências do sistema necessárias para o Prisma
-RUN apk add --no-cache openssl1.1-compat
-
 WORKDIR /app
 
 # Copiar o necessário do estágio builder
