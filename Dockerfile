@@ -1,6 +1,9 @@
 # Estágio de construção
 FROM node:20-alpine AS builder
 
+# Instala dependências do sistema necessárias para o Prisma
+RUN apk add --no-cache openssl openssl-dev lz4-libs lz4-dev musl-dev
+
 WORKDIR /app
 
 # Copiar arquivos de configuração
@@ -18,6 +21,9 @@ RUN npx prisma generate
 
 # Estágio de produção
 FROM node:20-alpine
+
+# Instala dependências do sistema necessárias para o Prisma
+RUN apk add --no-cache openssl lz4-libs
 
 WORKDIR /app
 
