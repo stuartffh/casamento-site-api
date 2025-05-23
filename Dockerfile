@@ -1,119 +1,38 @@
-# Etapa 1 - Build do cliente
-
-FROM node:18-alpine AS cliente-build
+# Estágio de construção
+FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-
-
-# Instalar pnpm
-
-RUN npm install -g pnpm
-
-
-
-# Copiar arquivos principais do monorepo
-
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-
-COPY apps/cliente ./apps/cliente
-
-COPY apps/server ./apps/server
-
-
+# Copiar arquivos de configuração
+COPY package*.json ./
+COPY prisma ./prisma/
 
 # Instalar dependências
+RUN npm install
 
-RUN pnpm install
+# Copiar o restante do código
+COPY . .
 
+# Gerar cliente do Prisma
+RUN npx prisma generate
 
-
-# Build do cliente
-
-WORKDIR /app/apps/cliente
-
-RUN pnpm build
-
-
-
-# Etapa 2 - Final
-
-FROM node:18-alpine
+# Estágio de produção
+FROM node:20-alpine
 
 WORKDIR /app
 
+# Copiar apenas o necessário do estágio de construção
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/package*.json ./
+COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/src ./src
+COPY --from=builder /app/.env ./
 
+# Garantir que o diretório do banco de dados existe
+RUN mkdir -p ./database && touch ./database/database.sqlite
 
-# Instalar pnpm
-
-RUN npm install -g pnpm
-
-
-
-# Instalar bash para script de inicialização
-
-RUN apk add --no-cache bash
-
-
-
-# Copiar arquivos principais
-
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-
-
-
-# Copiar server e build do cliente
-
-COPY apps/server ./apps/server
-
-COPY --from=cliente-build /app/apps/cliente/dist ./apps/server/public/build
-
-
-
-# Copiar banco SQLite (opcional)
-
-COPY ./database.sqlite ./apps/server/
-
-
-
-# Copiar script de inicialização
-
-COPY start.sh .
-
-
-
-# Instalar dependências de produção do server
-
-WORKDIR /app/apps/server
-
-RUN pnpm install --prod
-
-
-
-# Prisma (ajustável)
-
-ENV DATABASE_URL="file:./database.sqlite"
-
-RUN apk add --no-cache openssl
-
-RUN npx prisma generate && npx prisma migrate deploy
-
-
-
-# Variáveis de ambiente
-
-ENV NODE_ENV=production
-
-
-
-# Expor a porta
-
-EXPOSE 3000
-
+# Expor a porta da aplicação
 EXPOSE 3001
 
-
-
-# Iniciar ambos (frontend e backend)
-
-CMD ["bash", "/app/start.sh"]
+# Comando de inicialização
+CMD ["npm", "start"]
