@@ -94,9 +94,9 @@ router.post('/create-preference', async (req, res) => {
       },
       external_reference: `order-${order.id}`,
       back_urls: {
-        success: `https://casamento.finderdata.com.br/presentes/confirmacao/${order.id}`,
-        failure: `https://casamento.finderdata.com.br/presentes/confirmacao/${order.id}`,
-        pending: `https://casamento.finderdata.com.br/presentes/confirmacao/${order.id}`,
+        success: `https://casamento.finderdata.com.br/presentes/confirmacao?order_id${order.id}`,
+        failure: `https://casamento.finderdata.com.br/presentes/confirmacao?order_id${order.id}`,
+        pending: `https://casamento.finderdata.com.br/presentes/confirmacao?order_id${order.id}`,
       },
       auto_return: 'approved',
       notification_url: notificationUrl || `${baseUrl}/api/mercadopago/webhook`,
