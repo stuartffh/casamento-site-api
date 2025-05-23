@@ -1,0 +1,10 @@
+-- CreateTable
+CREATE TABLE "BackgroundImage" (
+    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    "filename" TEXT NOT NULL,
+    "path" TEXT NOT NULL,
+    "active" BOOLEAN NOT NULL DEFAULT true,
+    "order" INTEGER NOT NULL DEFAULT 0,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" DATETIME NOT NULL
+);
