@@ -3,15 +3,15 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# Copiar arquivos de configuração
-COPY package*.json ./
-COPY prisma ./prisma/
+# Copiar apenas os arquivos necessários para instalação
+COPY server/package*.json ./
+COPY server/prisma ./prisma/
 
 # Instalar dependências
 RUN npm install
 
-# Copiar o restante do código
-COPY . .
+# Copiar o restante da aplicação
+COPY server .
 
 # Gerar cliente do Prisma
 RUN npx prisma generate
@@ -21,18 +21,22 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-# Copiar apenas o necessário do estágio de construção
+# Copiar o necessário do estágio builder
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package*.json ./
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/src ./src
 COPY --from=builder /app/.env ./
 
-# Garantir que o diretório do banco de dados existe
-RUN mkdir -p ./database && touch ./database/database.sqlite
+# Criar diretório para o banco de dados
+RUN mkdir -p ./database
 
-# Expor a porta da aplicação
+# Ajustar permissões para o SQLite
+RUN chown -R node:node /app && \
+    chmod -R 755 /app
+
+USER node
+
 EXPOSE 3001
 
-# Comando de inicialização
 CMD ["npm", "start"]
