@@ -25,7 +25,14 @@ const prisma = new PrismaClient();
 const PORT = process.env.PORT || 3001;
 
 // Middlewares
-app.use(cors());
+const corsOptions = {
+  origin: ['https://casamento.finderdata.com.br', 'https://mariliaeiago.com.br'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
+};
+
+app.use(cors(corsOptions));
 app.use(express.json());
 
 // Servir arquivos estáticos da pasta uploads
