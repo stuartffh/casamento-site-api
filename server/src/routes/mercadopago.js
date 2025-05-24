@@ -93,10 +93,15 @@ router.post('/create-preference', async (req, res) => {
         email: customerEmail || 'cliente@exemplo.com'
       },
       external_reference: `order-${order.id}`,
+      /*back_urls: {
+        success: `https://api.mariliaeiago.com.br/presentes/confirmacao?order_id${order.id}`,
+        failure: `https://api.mariliaeiago.com.br/presentes/confirmacao?order_id${order.id}`,
+        pending: `https://api.mariliaeiago.com.br/presentes/confirmacao?order_id${order.id}`,
+      },*/
       back_urls: {
-        success: `https://casamento.finderdata.com.br/presentes/confirmacao?order_id${order.id}`,
-        failure: `https://casamento.finderdata.com.br/presentes/confirmacao?order_id${order.id}`,
-        pending: `https://casamento.finderdata.com.br/presentes/confirmacao?order_id${order.id}`,
+        success: `https://localhost:3001/presentes/confirmacao?order_id${order.id}`,
+        failure: `https://localhost:3001/presentes/confirmacao?order_id${order.id}`,
+        pending: `https://localhost:3001/presentes/confirmacao?order_id${order.id}`,
       },
       auto_return: 'approved',
       notification_url: notificationUrl || `${baseUrl}/api/mercadopago/webhook`,

@@ -56,7 +56,17 @@ router.get('/:section', async (req, res) => {
           recepcao: extractSection('📍 Recepção', 'Recepção'),
           dressCode: extractSection('👗 Dress Code', 'Dress Code'),
           hospedagem: extractSection('🏨 Hospedagem', 'Hospedagem'),
-          transporte: extractSection('🚖 Transporte', 'Transporte')
+          transporte: extractSection('🚖 Transporte', 'Transporte'),
+          // Campos vazios para os novos atributos
+          cerimonia_address: '',
+          cerimonia_photo: '',
+          recepcao_address: '',
+          recepcao_photo: '',
+          dressCode_photo: '',
+          hospedagem_address: '',
+          hospedagem_photo: '',
+          transporte_address: '',
+          transporte_photo: ''
         };
         
         // Atualizar o conteúdo no banco para o novo formato
@@ -81,6 +91,29 @@ router.put('/:section', protectNonGetRoutes, async (req, res) => {
   try {
     const { section } = req.params;
     const { content: contentText } = req.body;
+    
+    // Validação adicional para a seção de informações
+    if (section === 'informacoes') {
+      try {
+        // Verificar se o conteúdo é um JSON válido
+        const parsedContent = JSON.parse(contentText);
+        
+        // Verificar se todos os campos obrigatórios estão presentes
+        const requiredFields = ['cerimonia', 'recepcao', 'dressCode', 'hospedagem', 'transporte'];
+        const missingFields = requiredFields.filter(field => !parsedContent.hasOwnProperty(field));
+        
+        if (missingFields.length > 0) {
+          return res.status(400).json({ 
+            message: 'Campos obrigatórios ausentes', 
+            missingFields 
+          });
+        }
+      } catch (e) {
+        return res.status(400).json({ 
+          message: 'O conteúdo deve ser um JSON válido para a seção de informações' 
+        });
+      }
+    }
     
     let content = await prisma.content.findUnique({
       where: { section }
@@ -113,10 +146,23 @@ function getDefaultContent(section) {
     // Retornar o conteúdo padrão no novo formato JSON
     return JSON.stringify({
       cerimonia: 'Concatedral de São Pedro dos Clérigos – às 19h\nAv. Dantas Barreto, 677 – São José\n(Dica: teremos manobrista nesse ponto)',
+      cerimonia_address: 'Av. Dantas Barreto, 677 - São José, Recife - PE',
+      cerimonia_photo: 'cerimonia.jpg',
+      
       recepcao: 'Espaço Dom – R. das Oficinas, 15 – Pina (dentro da Ecomariner)\n⚠ Importante: no Waze, digite "Ecomariner" (não "Espaço Dom")\nDica: Passando o túnel do RioMar, cruza a Antônio de Gois, primeira direita e depois primeira esquerda.',
+      recepcao_address: 'R. das Oficinas, 15 - Pina, Recife - PE',
+      recepcao_photo: 'recepcao.jpg',
+      
       dressCode: 'Formal – porque esse dia merece um look à altura!',
+      dressCode_photo: 'dresscode.jpg',
+      
       hospedagem: 'Hotel Luzeiros Recife\nIbis Boa Viagem',
-      transporte: 'Parceria com TeleTáxi na saída da igreja!'
+      hospedagem_address: 'Av. Boa Viagem, 5000 - Boa Viagem, Recife - PE',
+      hospedagem_photo: 'hospedagem.jpg',
+      
+      transporte: 'Parceria com TeleTáxi na saída da igreja!',
+      transporte_address: 'Av. Dantas Barreto, 677 - São José, Recife - PE',
+      transporte_photo: 'transporte.jpg'
     });
   }
   
