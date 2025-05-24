@@ -1,22 +1,9 @@
 const express = require('express');
 const { PrismaClient } = require('@prisma/client');
 const { MercadoPagoConfig, Preference, Payment } = require('mercadopago');
-const fs = require('fs');
-const path = require('path');
+const crypto = require('crypto');
 const router = express.Router();
 const prisma = new PrismaClient();
-
-// Caminho do arquivo de logs
-const LOG_PATH = path.join(__dirname, 'mercado_pago_logs.txt');
-
-// Função auxiliar para registrar logs
-function appendLog(message) {
-  const timestamp = new Date().toISOString();
-  const fullMessage = `[${timestamp}] ${message}\n`;
-  fs.appendFile(LOG_PATH, fullMessage, (err) => {
-    if (err) console.error('Erro ao escrever log:', err);
-  });
-}
 
 // Função para obter as configurações do Mercado Pago
 async function getMercadoPagoConfig() {
@@ -34,7 +21,7 @@ async function getMercadoPagoConfig() {
   };
 }
 
-// Inicializar o SDK do Mercado Pago com o token de acesso
+// Inicializar o SDK do Mercado Pago
 async function initMercadoPago() {
   try {
     const { accessToken } = await getMercadoPagoConfig();
@@ -45,7 +32,7 @@ async function initMercadoPago() {
   }
 }
 
-// Criar preferência de pagamento para um presente
+// Criar preferência de pagamento
 router.post('/create-preference', async (req, res) => {
   try {
     const { presentId, customerName, customerEmail } = req.body;
@@ -82,11 +69,8 @@ router.post('/create-preference', async (req, res) => {
       }
     });
 
-    appendLog(`Novo pedido criado: orderId=${order.id}, presente=${present.name}, valor=R$${present.price}, cliente=${customerName}, email=${customerEmail || 'não informado'}`);
-
     const protocol = req.protocol || 'https';
     const host = req.get('host') || 'localhost:3000';
-    const baseUrl = `${protocol}://${host}`;
 
     const preference = {
       items: [
@@ -116,8 +100,6 @@ router.post('/create-preference', async (req, res) => {
 
     const response = await preferenceClient.create({ body: preference });
 
-    appendLog(`Preferência criada no Mercado Pago: paymentId=${response.id}, orderId=${order.id}`);
-
     await prisma.order.update({
       where: { id: order.id },
       data: {
@@ -137,10 +119,28 @@ router.post('/create-preference', async (req, res) => {
   }
 });
 
-// Webhook para receber notificações do Mercado Pago
-router.post('/webhook', async (req, res) => {
+// Webhook com verificação de assinatura HMAC
+router.post('/webhook', express.raw({ type: '*/*' }), async (req, res) => {
   try {
-    const { type, data } = req.body;
+    const signature = req.headers['x-signature'];
+    const secret = process.env.WEBHOOK_SECRET;
+
+    if (!signature || !secret) {
+      return res.status(401).send('Assinatura ausente ou chave inválida');
+    }
+
+    const computedSignature = crypto
+      .createHmac('sha256', secret)
+      .update(req.body)
+      .digest('hex');
+
+    if (computedSignature !== signature) {
+      return res.status(401).send('Assinatura inválida');
+    }
+
+    const payload = JSON.parse(req.body.toString());
+
+    const { type, data } = payload;
 
     if (type === 'payment') {
       const paymentId = data.id;
@@ -157,16 +157,12 @@ router.post('/webhook', async (req, res) => {
         const { external_reference, status } = payment;
         const orderId = external_reference.replace('order-', '');
 
-        appendLog(`Webhook recebido: pagamento=${payment.id}, status=${status}, referência=${external_reference}`);
-
         await prisma.order.update({
           where: { id: parseInt(orderId) },
           data: {
             status: status === 'approved' ? 'paid' : status
           }
         });
-
-        appendLog(`Status do pedido atualizado: orderId=${orderId}, status=${status}`);
 
         if (status === 'approved') {
           const order = await prisma.order.findUnique({
@@ -194,8 +190,6 @@ router.post('/webhook', async (req, res) => {
                 notes: `Pagamento aprovado via Mercado Pago. ID do pedido: ${orderId}`
               }
             });
-
-            appendLog(`Venda registrada: presenteId=${order.present.id}, cliente=${order.customerName}, valor=R$${order.present.price}, pagamento=${payment.id}`);
           }
         }
       }
@@ -203,12 +197,12 @@ router.post('/webhook', async (req, res) => {
 
     res.status(200).send('OK');
   } catch (error) {
-    console.error('Erro ao processar webhook do Mercado Pago:', error);
-    res.status(500).json({ message: 'Erro ao processar notificação', error: error.message });
+    console.error('Erro no webhook Mercado Pago:', error);
+    res.status(500).json({ message: 'Erro no webhook', error: error.message });
   }
 });
 
-// Verificar status de um pedido
+// Verificação de pedido
 router.get('/order/:id', async (req, res) => {
   try {
     const { id } = req.params;
