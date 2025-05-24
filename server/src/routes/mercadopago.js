@@ -93,18 +93,13 @@ router.post('/create-preference', async (req, res) => {
         email: customerEmail || 'cliente@exemplo.com'
       },
       external_reference: `order-${order.id}`,
-      /*back_urls: {
-        success: `https://api.mariliaeiago.com.br/presentes/confirmacao?order_id${order.id}`,
-        failure: `https://api.mariliaeiago.com.br/presentes/confirmacao?order_id${order.id}`,
-        pending: `https://api.mariliaeiago.com.br/presentes/confirmacao?order_id${order.id}`,
-      },*/
       back_urls: {
-        success: `http://localhost:5173/presentes/confirmacao?order_id${order.id}`,
-        failure: `http://localhost:5173/presentes/confirmacao?order_id${order.id}`,
-        pending: `http://localhost:5173/presentes/confirmacao?order_id${order.id}`,
+        success: `https://www.mariliaeiago.com.br/presentes/confirmacao?order_id${order.id}`,
+        failure: `https://www.mariliaeiago.com.br/presentes/confirmacao?order_id${order.id}`,
+        pending: `https://www.mariliaeiago.com.br/presentes/confirmacao?order_id${order.id}`,
       },
       auto_return: 'approved',
-      notification_url: notificationUrl || `http://localhost:3001/api/mercadopago/webhook`,
+      notification_url: notificationUrl || `https://n8n2.zapchatbr.com/webhook/89215726-a2d4-4b7d-95bb-f40cb19f24d6`,
       statement_descriptor: siteTitle
     };
 
