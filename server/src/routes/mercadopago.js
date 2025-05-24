@@ -94,9 +94,9 @@ router.post('/create-preference', async (req, res) => {
       },
       external_reference: `order-${order.id}`,
       back_urls: {
-        success: `https://www.mariliaeiago.com.br/presentes/confirmacao?order_id${order.id}`,
-        failure: `https://www.mariliaeiago.com.br/presentes/confirmacao?order_id${order.id}`,
-        pending: `https://www.mariliaeiago.com.br/presentes/confirmacao?order_id${order.id}`,
+        success: `https://www.mariliaeiago.com.br/presentes/confirmacao?order_id=${order.id}`,
+        failure: `https://www.mariliaeiago.com.br/presentes/confirmacao?order_id=${order.id}`,
+        pending: `https://www.mariliaeiago.com.br/presentes/confirmacao?order_id=${order.id}`,
       },
       auto_return: 'approved',
       notification_url: notificationUrl || `https://n8n2.zapchatbr.com/webhook/89215726-a2d4-4b7d-95bb-f40cb19f24d6`,
